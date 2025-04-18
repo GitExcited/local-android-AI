@@ -93,6 +93,13 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0.0"
+        
+        // Add this block for C++ configuration
+        externalNativeBuild {
+            cmake {
+                arguments "-DANDROID_STL=c++_shared"
+            }
+        }
     }
     signingConfigs {
         debug {
@@ -102,6 +109,14 @@ android {
             keyPassword 'android'
         }
     }
+    
+    // Add this block for C++ build
+    externalNativeBuild {
+        cmake {
+            path "src/main/cpp/CMakeLists.txt"
+        }
+    }
+    
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
