@@ -1,58 +1,15 @@
-// App.js
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, SafeAreaView, StatusBar, TouchableOpacity, Modal } from 'react-native';
-import TextPredictor from './screens/TextPredictorScreen';
-import SetupGuide from './screens/SetupGuideScreen';
-import { checkLlamaServer } from './services/llmService';
+import React from 'react';
+import { SafeAreaView, StyleSheet, StatusBar, Text, View } from 'react-native';
+import TextPredictorTest from './TextPredictorTest';
 
 export default function App() {
-  const [isSetupModalVisible, setIsSetupModalVisible] = useState(false);
-  const [isServerReady, setIsServerReady] = useState(false);
-  
-  // Check if server is configured on app launch
-  useEffect(() => {
-    checkServerStatus();
-  }, []);
-  
-  // Check server status
-  const checkServerStatus = async () => {
-    const isRunning = await checkLlamaServer();
-    setIsServerReady(isRunning);
-    
-    // If this is first launch and server isn't ready, show setup guide
-    if (!isRunning) {
-      // You could use AsyncStorage to check if this is first launch
-      setIsSetupModalVisible(true);
-    }
-  };
-  
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar style="auto" />
-      
+      <StatusBar barStyle="dark-content" />
       <View style={styles.header}>
-        <Text style={styles.title}>Text Prediction</Text>
-        <TouchableOpacity onPress={() => setIsSetupModalVisible(true)}>
-          <Text style={styles.helpText}>Help</Text>
-        </TouchableOpacity>
+        <Text style={styles.title}>LLM Word Predictor</Text>
       </View>
-      
-      <TextPredictor />
-      
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>
-          Powered by llama.cpp UI
-        </Text>
-      </View>
-      
-      {/* Setup Guide Modal */}
-      <Modal
-        visible={isSetupModalVisible}
-        animationType="slide"
-        transparent={false}
-      >
-        <SetupGuide onClose={() => setIsSetupModalVisible(false)} />
-      </Modal>
+      <TextPredictorTest />
     </SafeAreaView>
   );
 }
@@ -66,23 +23,9 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-  },
-  helpText: {
-    color: '#0066cc',
-    fontSize: 16,
-  },
-  footer: {
-    padding: 16,
-    alignItems: 'center',
-  },
-  footerText: {
-    color: '#666',
   },
 });
