@@ -55,8 +55,13 @@ public class LLMModule extends ReactContextBaseJavaModule {
             }
             
             Log.i(TAG, "Getting predictions for: " + text);
-            // Call native method instead of mock
+            // Call native method
             String[] predictions = nativeGetWordPredictions(text, numPredictions);
+            
+            if (predictions == null) {
+                promise.reject("PREDICTION_FAILED", "Failed to get predictions");
+                return;
+            }
             
             WritableArray result = Arguments.createArray();
             for (String word : predictions) {
@@ -74,7 +79,7 @@ public class LLMModule extends ReactContextBaseJavaModule {
     public void cleanup(Promise promise) {
         try {
             Log.i(TAG, "Cleaning up resources");
-            // Call native method instead of mock
+            // Call native method
             nativeCleanup();
             modelInitialized = false;
             promise.resolve(true);

@@ -1,255 +1,148 @@
-// TextPredictor.js
-import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  Alert
-} from 'react-native';
-import { checkLlamaServer, launchLlamaApp, getWordPredictions } from '../services/llmService';
+import React, { useState, useEffect } from 'react';
+import { View, TextInput, Text, FlatList, StyleSheet, Button, ActivityIndicator } from 'react-native';
+import LLMService from '../services/llmService';
 
-const TextPredictor = () => {
-  const [text, setText] = useState('');
-  const [predictions, setPredictions] = useState(['', '', '']);
+export default function TextPredictorTest() {
+  const [input, setInput] = useState('');
+  const [predictions, setPredictions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isServerRunning, setIsServerRunning] = useState(false);
-  const typingTimeoutRef = useRef(null);
+  const [status, setStatus] = useState('Not initialized');
   
-  // Check server status on component mount
+  // Initialize on component mount
   useEffect(() => {
-    checkServerStatus();
+    initializeLLM();
+    
+    // Cleanup on unmount
+    return () => {
+      LLMService.cleanup().then(() => {
+        console.log('LLM cleaned up');
+      });
+    };
   }, []);
   
-  // Check if server is running
-  const checkServerStatus = async () => {
-    const status = await checkLlamaServer();
-    setIsServerRunning(status);
-    return status;
+  const initializeLLM = async () => {
+    setStatus('Initializing...');
+    const result = await LLMService.initialize();
+    setStatus(result ? 'Initialized' : 'Initialization failed');
   };
   
-  // Start the server - THIS FUNCTION LAUNCHES LLAMA.CPP
-  const startServer = async () => {
+  const getPredictions = async () => {
+    if (!input.trim()) return;
+    
+    setIsLoading(true);
+    setStatus('Getting predictions...');
+    
     try {
-      setIsLoading(true);
-      // Try to launch the app
-      const launched = await launchLlamaApp();
-      
-      if (!launched) {
-        Alert.alert(
-          "App Not Installed",
-          "Please install llama.cpp UI from the Google Play Store to use text predictions.",
-          [
-            { text: "OK" }
-          ]
-        );
-        return false;
-      }
-      
-      // Wait for app to start and check status again
-      await new Promise(resolve => setTimeout(resolve, 5000));
-      const status = await checkServerStatus();
-      
-      if (!status) {
-        Alert.alert(
-          "Server Not Running",
-          "Please open llama.cpp UI and enable the API server in settings.",
-          [
-            { text: "OK" }
-          ]
-        );
-      }
-      
-      return status;
+      const result = await LLMService.getNextWordPredictions(input, 10);
+      setPredictions(result);
+      setStatus(`Got ${result.length} predictions`);
     } catch (error) {
-      console.error('Error starting server:', error);
-      return false;
+      setStatus(`Error: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
   };
   
-  // Handle text changes and request predictions
-  const handleTextChange = (newText) => {
-    setText(newText);
-    
-    // Clear previous timeout to avoid multiple requests
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-    
-    // Only request predictions if there's text and user has stopped typing
-    if (newText.trim().length > 0) {
-      typingTimeoutRef.current = setTimeout(() => {
-        requestPredictions(newText);
-      }, 500); // Wait 500ms after typing stops
-    } else {
-      setPredictions(['', '', '']);
-    }
-  };
-  
-  // Request predictions from the LLM
-  const requestPredictions = async (inputText) => {
-    // Don't proceed if text is empty
-    if (!inputText.trim()) return;
-    
-    // Check if server is running
-    const serverRunning = isServerRunning || await checkServerStatus();
-    
-    if (!serverRunning) {
-      // Try to start the server
-      const started = await startServer();
-      if (!started) return;
-    }
-    
-    try {
-      setIsLoading(true);
-      
-      // Get word predictions
-      const words = await getWordPredictions(inputText, 3);
-      setPredictions(words);
-      
-    } catch (error) {
-      console.error('Error getting predictions:', error);
-      setPredictions(['', '', '']);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  // Apply a prediction to the text
   const applyPrediction = (prediction) => {
-    if (!prediction) return;
+    const words = input.split(' ');
     
-    const words = text.trim().split(/\s+/);
-    const lastWordIncomplete = text.endsWith(' ') ? false : true;
-    
-    let newText;
-    if (lastWordIncomplete && words.length > 0) {
-      // Replace the last word
-      newText = words.slice(0, -1).join(' ');
-      if (newText.length > 0) newText += ' ';
-      newText += prediction + ' ';
+    // If the last character is a space, add the word
+    // Otherwise, replace the last word
+    if (input.endsWith(' ') || input === '') {
+      setInput(input + prediction + ' ');
     } else {
-      // Add to the end
-      newText = text + prediction + ' ';
+      words.pop();
+      setInput(words.join(' ') + ' ' + prediction + ' ');
     }
     
-    setText(newText);
-    // Clear predictions temporarily
-    setPredictions(['', '', '']);
-    
-    // Request new predictions after a delay
-    setTimeout(() => {
-      requestPredictions(newText);
-    }, 500);
+    // Clear predictions
+    setPredictions([]);
   };
   
   return (
     <View style={styles.container}>
-      <View style={styles.statusBar}>
-        <Text style={styles.statusText}>
-          Server Status: {isServerRunning ? 'Connected' : 'Disconnected'}
-        </Text>
-        {!isServerRunning && (
-          <TouchableOpacity 
-            style={styles.startButton}
-            onPress={startServer}
-            disabled={isLoading}
-          >
-            <Text style={styles.startButtonText}>Start</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+      <Text style={styles.status}>Status: {status}</Text>
       
       <TextInput
-        style={styles.textInput}
-        value={text}
-        onChangeText={handleTextChange}
-        placeholder="Type here for word predictions..."
+        style={styles.input}
+        value={input}
+        onChangeText={setInput}
+        placeholder="Enter text for prediction"
         multiline
-        autoCapitalize="none"
       />
       
-      <View style={styles.predictionsContainer}>
-        {isLoading ? (
-          <ActivityIndicator size="small" color="#0066cc" />
-        ) : (
-          predictions.map((prediction, index) => (
+      <Button
+        title={isLoading ? "Loading..." : "Get Predictions"}
+        onPress={getPredictions}
+        disabled={isLoading || !input.trim()}
+      />
+      
+      {isLoading && (
+        <ActivityIndicator style={styles.loader} size="large" color="#0066cc" />
+      )}
+      
+      <Text style={styles.resultsHeader}>Predictions:</Text>
+      
+      {predictions.length > 0 ? (
+        <FlatList
+          data={predictions}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({ item }) => (
             <TouchableOpacity
-              key={index}
-              style={[
-                styles.predictionButton,
-                !prediction && styles.emptyPrediction
-              ]}
-              onPress={() => prediction && applyPrediction(prediction)}
-              disabled={!prediction}
+              style={styles.predictionItem}
+              onPress={() => applyPrediction(item)}
             >
-              <Text style={styles.predictionText}>
-                {prediction || '-'}
-              </Text>
+              <Text style={styles.prediction}>{item}</Text>
             </TouchableOpacity>
-          ))
-        )}
-      </View>
+          )}
+        />
+      ) : (
+        <Text style={styles.noPredictions}>
+          {isLoading ? "Loading predictions..." : "No predictions yet"}
+        </Text>
+      )}
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     padding: 16,
+    flex: 1,
   },
-  statusBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  status: {
     marginBottom: 16,
-  },
-  statusText: {
-    fontSize: 14,
-  },
-  startButton: {
-    backgroundColor: '#0066cc',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 4,
-  },
-  startButtonText: {
-    color: 'white',
     fontWeight: 'bold',
   },
-  textInput: {
+  input: {
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 8,
     padding: 12,
     marginBottom: 16,
     minHeight: 100,
-    fontSize: 16,
   },
-  predictionsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    height: 50,
+  loader: {
+    marginVertical: 20,
   },
-  predictionButton: {
-    flex: 1,
-    backgroundColor: '#e1f5fe',
-    marginHorizontal: 4,
+  resultsHeader: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  predictionItem: {
+    backgroundColor: '#f0f0f0',
     borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 8,
+    padding: 12,
+    marginBottom: 8,
   },
-  emptyPrediction: {
-    backgroundColor: '#f5f5f5',
-  },
-  predictionText: {
+  prediction: {
     fontSize: 16,
+  },
+  noPredictions: {
+    fontStyle: 'italic',
+    color: '#666',
+    marginTop: 20,
   },
 });
-
-export default TextPredictor;
