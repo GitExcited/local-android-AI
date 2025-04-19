@@ -1,0 +1,55 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+metro.config copy.js
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+# Android/iOS specific
+LocalLLMApp/android/.gradle/
+LocalLLMApp/android/build/
+LocalLLMApp/android/app/build/
+LocalLLMApp/android/app/debug.keystore
+LocalLLMApp/ios/Pods/
+LocalLLMApp/ios/build/
+LocalLLMApp/ios/*.xcworkspace
+LocalLLMApp/ios/*.xcodeproj/*.xcuserstate
+
+# Model files - typically large binaries
+LocalLLMApp/models/
+*.gguf
+*.bin
+
+# JNI libs - should be compiled, not stored in git
+LocalLLMApp/android/app/src/main/jniLibs/

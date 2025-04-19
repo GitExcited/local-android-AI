@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "largeHeap": true,
+            "useLegacyPackaging": true,
+            "extraProguardRules": "-keep class com.rnllama.** { *; }"
+          }
+        }
+      ],
+      "./plugins/copyjni.plugin.js"
+    ],
+    "name": "LocalLLMApp",
+    "slug": "LocalLLMApp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/splash.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.gitexcited.LocalLLMApp",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/splash.png",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.WAKE_LOCK"
+      ],
+      "largeHeap": true,
+      "useLegacyPackaging": true,
+      "extraProguardRules": "-keep class com.rnllama.** { *; }"
+    },
+    "web": {
+      "favicon": "./assets/images/splash.png"
+    }
+  }
+}
