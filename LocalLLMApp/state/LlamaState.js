@@ -34,9 +34,7 @@ export const useLlamaEngine = create(
           gpuLayers: config.gpuLayers,
         };
         
-        // THIS IS THE IMPORTANT PART - MAKE SURE YOU HAVE THIS:
         const progressCallback = (progress) => {
-          // Convert progress to a number explicitly
           const numericProgress = typeof progress === 'number' ? progress : Number(progress);
           
           // Make sure it's a valid number before storing
@@ -116,6 +114,47 @@ export const useLlamaEngine = create(
       },
       
       setLoadProgress: (progress) => set({ loadProgress: progress }),
+
+      predictNextTokens: async (prompt, numPredictions = 5) => {
+        const { context } = get();
+        if (!context) {
+          console.error('No model loaded');
+          return [];
+        }
+        
+        try {
+          // Use the completion method with n_probs parameter
+          const completionParams = {
+            prompt,
+            temperature: 0.7,
+            topK: 40,
+            topP: 0.9,
+            maxTokens: 1,  // Just generate one token
+            repeatPenalty: 1.1,
+            n_probs: numPredictions * 2,  // Get probabilities for top tokens
+          };
+          
+          // Run the completion
+          const result = await context.completion(completionParams);
+          
+          // Extract the predictions from completion_probabilities
+          if (result.completion_probabilities && result.completion_probabilities.length > 0) {
+            // Get the first token's probability list
+            const probsList = result.completion_probabilities[0].probs;
+            
+            // Map to the expected format and limit to numPredictions
+            return probsList.slice(0, numPredictions).map(prob => ({
+              text: prob.tok_str,
+              score: prob.prob
+            }));
+          }
+          
+          return [];
+        } catch (error) {
+          console.error('Prediction error:', error);
+          return [];
+        }
+      }
     }),
     {
       name: 'llama-storage',

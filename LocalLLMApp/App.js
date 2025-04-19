@@ -5,6 +5,7 @@ import { ensureDirectories } from './utils/FileUtils';
 import ModelScreen from './screens/ModelScreen';
 import ModelLoadingScreen from './screens/ModelLoadingScreen';
 import ChatScreen from './screens/ChatScreen';
+import AutopredictScreen from './screens/AutoPredictScreen';
 import { useModelStore } from './state/ModelState';
 import { useLlamaEngine } from './state/LlamaState';
 
@@ -64,6 +65,17 @@ export default function App() {
       <ChatScreen 
         onBack={() => {
           setScreen('models');
+        }}
+        onSwitchToPredict={() => setScreen('predict')} 
+      />
+    );
+  }
+  
+  if (screen === 'predict') {
+    return (
+      <AutopredictScreen 
+        onBack={() => {
+          setScreen('chat');
         }}
       />
     );

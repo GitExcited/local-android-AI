@@ -15,7 +15,7 @@ import { useLlamaEngine } from '../state/LlamaState';
 import { useChatStore } from '../state/ChatState';
 import BackgroundService from 'react-native-background-actions';
 
-export default function ChatScreen({ onBack }) {
+export default function ChatScreen({ onBack, onSwitchToPredict }) {
   const [input, setInput] = useState('');
   const flatListRef = useRef(null);
   
@@ -129,7 +129,9 @@ export default function ChatScreen({ onBack }) {
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{model?.name || 'Chat'}</Text>
-        <View style={{ width: 50 }} />
+        <TouchableOpacity onPress={onSwitchToPredict} style={styles.modeButton}>
+          <Text style={styles.backButtonText}>Predict</Text>
+        </TouchableOpacity>
       </View>
       
       <FlatList
@@ -265,5 +267,8 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
     fontWeight: 'bold',
+  },
+  modeButton: {
+    width: 70,
   },
 });
