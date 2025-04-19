@@ -61,11 +61,12 @@ Implements persistent storage using MMKV:
 
 ## JNI Integration
 The app uses `cui-llama.rn` native module with JNI bindings to interface with the underlying llama.cpp library. The `jniLibs` folder contains compiled libraries for different CPU architectures:
+- arm64-v8a (most modern Android devices)
+- armeabi-v7a (older devices)
+- x86 and x86_64 (mostly emulators)
+The `copyjni.plugin.js` ensures these native libraries are properly included in the APK.
 
 # License
 See the LICENSE.md file for details.
 
-arm64-v8a (most modern Android devices)
-armeabi-v7a (older devices)
-x86 and x86_64 (mostly emulators)
-The `copyjni.plugin.js` ensures these native libraries are properly included in the APK.
+
